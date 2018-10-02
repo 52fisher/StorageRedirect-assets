@@ -9,13 +9,14 @@ from collections import OrderedDict
 from github import Github, GithubObject
 
 import data_converter
-from utils import list_filter, list_map, is_app_rules, login_github
+from utils import list_filter, list_map, is_app_rules, login_github, \
+                  is_issue_need_discussion, list_filter_not
 
 
 # Constants
 
 # Script version
-VERSION = '0.1.0'
+VERSION = '0.1.1'
 # Script usage (help)
 USAGE = '%prog [options] arg0 arg1'
 # Script repo in github
@@ -37,11 +38,11 @@ def main():
     opt_parser.add_option('--convert',
                           metavar='ORIGIN_RULES_PATH',
                           help='convert old version configs to latest version.')
-    opt_parser.add_option('--merge',
+    opt_parser.add_option('-2', '--merge',
                           action='store_true', dest='merge', default=False,
                           help='merge converted configs to current ' \
                           '(latest) rules')
-    opt_parser.add_option('--make-verified-list',
+    opt_parser.add_option('-3', '--make-verified-list',
                           metavar='RULES_PATH',
                           help='make verified apps list from current ' \
                           'repo (Use rules path ([git repo]/rules))')
@@ -59,7 +60,7 @@ def main():
                           help='merge output verified apps (when you edited' \
                           ' verified_apps.json maually, you will need this.)' \
                           ' Only use --make-verfied-list can add this arg.')
-    opt_parser.add_option('--download-from-issues',
+    opt_parser.add_option('-1', '--download-from-issues',
                           action='store_true', dest='download_issues',
                           default=False,
                           help='Download rules from open issues (only auto ' \
@@ -68,10 +69,13 @@ def main():
                           metavar='\'ACCESS_TOKEN\' or \'USERNAME+PASSWD\'',
                           help='Login github by access token or password ' \
                           'when operations need request github api.')
-    opt_parser.add_option('--close-issues-if-existing',
+    opt_parser.add_option('-4', '--close-issues-if-existing',
                           metavar='LOCAL_RULES_PATH',
                           help='Close rules issues if existing. Local repo ' \
                           'rules path required.')
+    opt_parser.add_option('-5', '--add-ids-for-observers',
+                          metavar='LOCAL_RULES_PATH',
+                          help='Add ids for observers in rules.')
 
     # Get user input and do operations
     (options, _) = opt_parser.parse_args()
@@ -98,6 +102,8 @@ def main():
         else:
             close_existing_rules_issues(login_github(options.login_github),
                                         options.close_issues_if_existing)
+    elif options.add_ids_for_observers:
+        add_ids_for_observers(options.add_ids_for_observers)
     else:
         opt_parser.print_help()
 
@@ -266,6 +272,7 @@ def download_issues(github):
             '[New rules request][AUTO]'),
         repo.get_issues(state='open').get_page(0)
     )
+    issues = list_filter_not(is_issue_need_discussion, issues)
 
     # Make output path
     output_path = os.getcwd() + os.sep + 'output'
@@ -356,6 +363,47 @@ def close_existing_rules_issues(github, rules_path):
         print('No issues to close.')
     else:
         print('Closed %d issues.' % count)
+
+
+def contains_id_in_observer(observers, id):
+    for observer in observers:
+        if 'id' in observer.keys() and observer['id'] == id:
+            return True
+    return False
+
+def add_ids_for_observers(path):
+    rules = list_filter(
+        is_app_rules,
+        list_map(
+            lambda item: path + os.sep + 'apps' + os.sep + item,
+            os.listdir(path + os.sep + 'apps')
+        )
+    )
+
+    # Update rules
+    for rule in rules:
+        model = {}
+        try:
+            with codecs.open(rule, mode='r', encoding='utf-8') as f:
+                model = json.loads(f.read())
+                f.close()
+            changed = False
+            if 'observers' in model.keys():
+                for observer in model['observers']:
+                    if not 'id' in observer.keys():
+                        temp_id = observer['description']
+                        count = 0
+                        while contains_id_in_observer(model['observers'], \
+                            temp_id + '_' + str(count)):
+                            count += 1
+                        observer['id'] = temp_id + '_' + str(count)
+                        changed = True
+            if changed:
+                with codecs.open(rule, mode='w', encoding='utf-8') as f:
+                    f.write(json.dumps(model, indent=2, ensure_ascii=False))
+                    f.close()
+        except Exception as e:
+            print('Failed to update ' + rule)
 
 
 if __name__ == '__main__':

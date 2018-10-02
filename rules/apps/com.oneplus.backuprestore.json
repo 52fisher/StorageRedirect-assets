@@ -1,9 +1,16 @@
 {
   "package": "com.oneplus.backuprestore",
-  "recommended": false,
-  "verified": true,
+  "recommended": true,
+  "verified": false,
   "authors": [
     "Shane"
   ],
-  "observers": []
+  "observers": [
+    {
+      "source": "Backup",
+      "target": "Documents/OPBackup",
+      "description": "app_backup",
+      "id": "app_backup_0"
+    }
+  ]
 }

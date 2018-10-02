@@ -1,0 +1,18 @@
+{
+  "package": "com.drakeet.purewriter",
+  "recommended": true,
+  "verified": false,
+  "authors": [
+    "YHNdnzj"
+  ],
+  "observers": [
+    {
+      "add_to_downloads": false,
+      "call_media_scan": false,
+      "description": "saved_files",
+      "source": "backups/PureWriterAutoBackups",
+      "target": "Documents/PureWriter",
+      "id": "saved_files_0"
+    }
+  ]
+}

@@ -3,7 +3,8 @@
   "recommended": true,
   "verified": false,
   "authors": [
-    "simonsmh"
+    "simonsmh",
+    "sharp-tasting"
   ],
   "observers": [
     {
@@ -12,7 +13,8 @@
       "source": "MyAndroidTools",
       "target": "Documents/MyAndroidTools",
       "description": "app_backup",
-      "allow_child": false
+      "allow_child": false,
+      "id": "app_backup_0"
     }
   ]
 }
