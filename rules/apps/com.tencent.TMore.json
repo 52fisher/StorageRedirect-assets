@@ -1,8 +1,9 @@
 {
   "package": "com.tencent.TMore",
-  "recommended": true,
+  "recommended": false,
   "verified": false,
   "authors": [
-    "Skimige"
+    "Skimige",
+    "Mari Kid"
   ]
 }
